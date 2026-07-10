@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manifest Code Generator</title>
+    <title>AndroidManifest.xml Code Generator</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -166,9 +166,10 @@
             border: 1px solid var(--border-color);
             overflow-x: auto;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
             color: #a5b4fc;
+            max-height: 500px;
         }
 
         @keyframes fadeIn {
@@ -181,8 +182,8 @@
 
     <div class="container">
         <div class="header">
-            <h2>Manifest Setup</h2>
-            <p>Enter your application details below to generate the code</p>
+            <h2>AndroidManifest.xml Setup</h2>
+            <p>Enter your App Name and Package Name to generate the code</p>
         </div>
 
         <div class="input-group">
@@ -193,10 +194,10 @@
         <div class="input-group">
             <label for="packageName">Package Name</label>
             <input type="text" id="packageName" placeholder="e.g., com.videoplayer.pro" autocomplete="off">
-            <div id="errorMessage">Invalid package name! It must contain at least one dot (e.g., com.myapp), use only lowercase letters/numbers, and start with a letter.</div>
+            <div id="errorMessage">Invalid package name! Format: com.example.app (lowercase, no spaces).</div>
         </div>
 
-        <button class="btn-generate" onclick="generateCode()">Generate Code</button>
+        <button class="btn-generate" onclick="generateCode()">Generate XML Code</button>
 
         <div class="output-container" id="outputContainer">
             <div class="output-header">
@@ -207,73 +208,8 @@
         </div>
     </div>
 
-    <script>
-        // Auto-suggest package name based on App Name
-        document.getElementById('appName').addEventListener('input', function(e) {
-            let name = e.target.value.toLowerCase().trim();
-            // Remove special characters and spaces
-            let formattedName = name.replace(/[^a-z0-9]/g, '');
-            
-            let packageInput = document.getElementById('packageName');
-            if(formattedName.length > 0) {
-                // Ensure it starts with a letter for auto-suggestion
-                if(/^[0-9]/.test(formattedName)) {
-                    formattedName = 'app' + formattedName;
-                }
-                packageInput.value = 'com.' + formattedName + '.app';
-            } else {
-                packageInput.value = '';
-            }
-            
-            // Clear error styling when typing
-            clearError();
-        });
+    <textarea id="rawCodeTemplate" style="display:none;">
 
-        // Clear error styling when manually editing package name
-        document.getElementById('packageName').addEventListener('input', clearError);
-
-        function clearError() {
-            document.getElementById('packageName').classList.remove('error-border');
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('outputContainer').style.display = 'none';
-        }
-
-        // Android Studio Package Name Validation Logic
-        function isValidPackageName(packageName) {
-            // Regex explanation:
-            // ^[a-z][a-z0-9_]* : Must start with a letter, followed by letters, numbers, or underscores
-            // (\.[a-z][a-z0-9_]*)+$ : Must have at least one dot, followed by the same rules, ending the string
-            const packageRegex = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
-            
-            // Convert to lowercase for checking, though it's best practice to keep packages lowercase
-            return packageRegex.test(packageName.toLowerCase());
-        }
-
-        function generateCode() {
-            let appName = document.getElementById('appName').value.trim();
-            let packageName = document.getElementById('packageName').value.trim();
-            let packageInput = document.getElementById('packageName');
-            let errorMsg = document.getElementById('errorMessage');
-
-            if(!appName || !packageName) {
-                alert("Please fill in both App Name and Package Name!");
-                return;
-            }
-
-            // Validate the package name format
-            if(!isValidPackageName(packageName)) {
-                packageInput.classList.add('error-border');
-                errorMsg.style.display = 'block';
-                document.getElementById('outputContainer').style.display = 'none';
-                return; // Stop generation if invalid
-            }
-
-            // Ensure lowercase package name
-            packageName = packageName.toLowerCase();
-
-            // ---> PASTE YOUR MANIFEST XML CODE BELOW THIS LINE <---
-            let baseXML = `
-            
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lfs.player">
@@ -300,7 +236,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:banner="@drawable/ic_tv_ico"
-        android:label="LFS Player"
+        android:label="LFS player"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
@@ -342,20 +278,68 @@
     </application>
 </manifest>
 
-            `;
-            // ---> PASTE YOUR MANIFEST XML CODE ABOVE THIS LINE <---
+    </textarea>
 
+    <script>
+        document.getElementById('appName').addEventListener('input', function(e) {
+            let name = e.target.value.toLowerCase().trim();
+            let formattedName = name.replace(/[^a-z0-9]/g, '');
+            
+            let packageInput = document.getElementById('packageName');
+            if(formattedName.length > 0) {
+                if(/^[0-9]/.test(formattedName)) {
+                    formattedName = 'app' + formattedName;
+                }
+                packageInput.value = 'com.' + formattedName + '.app';
+            } else {
+                packageInput.value = '';
+            }
+            clearError();
+        });
 
-            // Logic to replace the package name and app label
+        document.getElementById('packageName').addEventListener('input', clearError);
+
+        function clearError() {
+            document.getElementById('packageName').classList.remove('error-border');
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('outputContainer').style.display = 'none';
+        }
+
+        function isValidPackageName(packageName) {
+            const packageRegex = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
+            return packageRegex.test(packageName.toLowerCase());
+        }
+
+        function generateCode() {
+            let appName = document.getElementById('appName').value.trim();
+            let packageName = document.getElementById('packageName').value.trim();
+            let packageInput = document.getElementById('packageName');
+            let errorMsg = document.getElementById('errorMessage');
+
+            if(!appName || !packageName) {
+                alert("Please fill in both App Name and Package Name!");
+                return;
+            }
+
+            if(!isValidPackageName(packageName)) {
+                packageInput.classList.add('error-border');
+                errorMsg.style.display = 'block';
+                document.getElementById('outputContainer').style.display = 'none';
+                return; 
+            }
+
+            packageName = packageName.toLowerCase();
+
+            // Get the raw XML code from the hidden textarea
+            let baseXML = document.getElementById('rawCodeTemplate').value;
+
+            // Dynamic Replacement Logic
             let finalCode = baseXML
-                .replace(/package="[^"]+"/g, 'package="' + packageName + '"')
+                .replace(/com\.lfs\.player/g, packageName)
                 .replace(/android:label="[^"]+"/g, 'android:label="' + appName + '"');
 
-            // Display the generated code
             document.getElementById('codeOutput').textContent = finalCode.trim();
             document.getElementById('outputContainer').style.display = 'block';
-            
-            // Reset copy button text if it was changed
             document.getElementById('copyBtn').textContent = 'Copy Code';
         }
 
